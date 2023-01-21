@@ -3,8 +3,6 @@ from fastapi import FastAPI, Depends, status, HTTPException, Response
 from sqlalchemy.orm import Session
 from .database import get_db, engine
 
-from pydantic import BaseModel
-
 from . import models, schemas
 
 models.Base.metadata.create_all(bind=engine)
