@@ -61,7 +61,7 @@ async def delete_post(id: int, db: Session = Depends(get_db)):
 
     post_query = db.query(models.Post).filter(models.Post.id == id)
 
-    if post_query.first() == None:
+    if post_query.first() is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with id {id} was not found",
@@ -81,7 +81,7 @@ async def update_post(id: int, post: Post, db: Session = Depends(get_db)):
 
     post_on_db = post_query.first()
 
-    if post_on_db == None:
+    if post_on_db is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with id {id} was not found",
