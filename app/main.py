@@ -5,7 +5,7 @@ from .database import get_db, engine
 
 from pydantic import BaseModel
 
-from . import models
+from . import models, schemas
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -20,14 +20,8 @@ async def get_posts(db: Session = Depends(get_db)):
     return {"data": posts}
 
 
-class Post(BaseModel):
-    title: str
-    content: str
-    published: bool = True
-
-
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-async def create_post(post: Post, db: Session = Depends(get_db)):
+async def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
 
     new_post = models.Post(**post.dict())
 
@@ -75,7 +69,7 @@ async def delete_post(id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/posts/{id}")
-async def update_post(id: int, post: Post, db: Session = Depends(get_db)):
+async def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
 
     post_query = db.query(models.Post).filter(models.Post.id == id)
 
