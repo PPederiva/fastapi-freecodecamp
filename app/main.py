@@ -3,6 +3,8 @@ from fastapi import FastAPI, Depends, status, HTTPException, Response
 from sqlalchemy.orm import Session
 from .database import get_db, engine
 
+from typing import List
+
 from . import models, schemas
 
 models.Base.metadata.create_all(bind=engine)
@@ -10,15 +12,15 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 
-@app.get("/posts")
+@app.get("/posts", response_model=List[schemas.Post])
 async def get_posts(db: Session = Depends(get_db)):
 
     posts = db.query(models.Post).all()
 
-    return {"data": posts}
+    return posts
 
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
+@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
 async def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
 
     new_post = models.Post(**post.dict())
@@ -31,10 +33,10 @@ async def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
     db.commit()  # Commit
     db.refresh(new_post)  # Return the new created post.
 
-    return {"data": new_post}
+    return new_post
 
 
-@app.get("/posts/{id}")
+@app.get("/posts/{id}", response_model=schemas.Post)
 async def get_post(id: int, db: Session = Depends(get_db)):
 
     post_on_db = db.query(models.Post).filter(models.Post.id == id).first()
@@ -45,7 +47,7 @@ async def get_post(id: int, db: Session = Depends(get_db)):
             detail=f"Post with id {id} was not found",
         )
 
-    return {"data": post_on_db}
+    return post_on_db
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -66,7 +68,7 @@ async def delete_post(id: int, db: Session = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.put("/posts/{id}")
+@app.put("/posts/{id}", response_model=schemas.Post)
 async def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
 
     post_query = db.query(models.Post).filter(models.Post.id == id)
@@ -85,4 +87,4 @@ async def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(g
 
     post_updated = post_query.first()
 
-    return {"data": post_updated}
+    return post_updated
