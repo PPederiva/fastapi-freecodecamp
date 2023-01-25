@@ -5,11 +5,14 @@ from .database import get_db, engine
 
 from typing import List
 
-from . import models, schemas
+from . import models, schemas, utils
 
 models.Base.metadata.create_all(bind=engine)
 
+
 app = FastAPI()
+
+# POST
 
 
 @app.get("/posts", response_model=List[schemas.Post])
@@ -88,3 +91,35 @@ async def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(g
     post_updated = post_query.first()
 
     return post_updated
+
+
+# USER
+
+
+@app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+
+    hashed_password = utils.hash(user.password)
+
+    user.password = hashed_password
+    new_user = models.User(**user.dict())
+
+    db.add(new_user)  # Add
+    db.commit()  # Commit
+    db.refresh(new_user)  # Return the new created post.
+
+    return new_user
+
+
+@app.get("/users/{id}", response_model=schemas.UserOut)
+def get_user(id: int, db: Session = Depends(get_db)):
+
+    user = db.query(models.User).filter(models.User.id == id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with id: {id} not found.",
+        )
+
+    return user
