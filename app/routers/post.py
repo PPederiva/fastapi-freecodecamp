@@ -12,12 +12,14 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 
 @router.get("/", response_model=List[schemas.Post])
 async def get_posts(
-    db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user)
 ):
 
-    posts = db.query(models.Post).all()
+    # posts = db.query(models.Post).filter(
+    #     models.Post.owner_id == current_user.id).all()
 
-    print(current_user.email)
+    posts = db.query(models.Post).all()
 
     return posts
 
@@ -29,11 +31,7 @@ async def create_post(
     current_user=Depends(oauth2.get_current_user),
 ):
 
-    new_post = models.Post(**post.dict())
-
-    # new_post = models.Post(
-    #     title=post.title, content=post.content, published=post.published
-    # )
+    new_post = models.Post(owner_id=current_user.id, **post.dict())
 
     db.add(new_post)  # Add
     db.commit()  # Commit
@@ -69,11 +67,15 @@ async def delete_post(
 
     post_query = db.query(models.Post).filter(models.Post.id == id)
 
-    if post_query.first() is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Post with id {id} was not found",
-        )
+    post = post_query.first()
+
+    if post is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Post with id {id} was not found")
+
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Not authorized to perform the requested action.")
 
     post_query.delete(synchronize_session=False)
 
@@ -95,10 +97,12 @@ async def update_post(
     post_on_db = post_query.first()
 
     if post_on_db is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Post with id {id} was not found",
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Post with id {id} was not found")
+
+    if post_on_db.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Not authorized to perform the requested action.")
 
     post_query.update(post.dict(), synchronize_session=False)
 
