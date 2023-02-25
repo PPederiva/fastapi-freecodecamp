@@ -10,6 +10,7 @@ psycopg2 = "*"
 python-jose = {extras = ["cryptography"], version = "*"}
 bcrypt = "*"
 passlib = {extras = ["bcrypt"], version = "*"}
+pylint = "*"
 
 [dev-packages]
 
