@@ -11,10 +11,19 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 
 @router.get("/", response_model=List[schemas.Post])
 async def get_posts(
-        db: Session = Depends(get_db), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
+    db: Session = Depends(get_db),
+    limit: int = 10,
+    skip: int = 0,
+    search: Optional[str] = "",
+):
 
-    posts = db.query(models.Post).filter(
-        models.Post.title.contains(search)).limit(limit).offset(skip).all()
+    posts = (
+        db.query(models.Post)
+        .filter(models.Post.title.contains(search))
+        .limit(limit)
+        .offset(skip)
+        .all()
+    )
 
     return posts
 
@@ -65,12 +74,16 @@ async def delete_post(
     post = post_query.first()
 
     if post is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"Post with id {id} was not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Post with id {id} was not found",
+        )
 
     if post.owner_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail="Not authorized to perform the requested action.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to perform the requested action.",
+        )
 
     post_query.delete(synchronize_session=False)
 
@@ -92,12 +105,16 @@ async def update_post(
     post_on_db = post_query.first()
 
     if post_on_db is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"Post with id {id} was not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Post with id {id} was not found",
+        )
 
     if post_on_db.owner_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail="Not authorized to perform the requested action.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to perform the requested action.",
+        )
 
     post_query.update(post.dict(), synchronize_session=False)
 

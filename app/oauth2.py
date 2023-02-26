@@ -41,8 +41,7 @@ def get_current_user(
         token=token, credentials_exception=credentials_exception
     )
 
-    user_id = db.query(models.User).filter(
-        models.User.id == token_data.id).first()
+    user_id = db.query(models.User).filter(models.User.id == token_data.id).first()
 
     return user_id
 
